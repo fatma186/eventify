@@ -2,7 +2,7 @@
 
 ## Domain
 
-- [ ] Create `src/domain.ts` with the required types and generic `findById`.
+- [x] Create `src/domain.ts` with the required types and generic `findById`.
 
 ## Server and routes
 
