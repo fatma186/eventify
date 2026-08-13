@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import type { Event } from "./domain.ts";
+import { handleVenueRoutes } from "./venue.routes.ts";
 
 async function loadEvents(): Promise<Event[]> {
   const file = await readFile("./data/events.json", "utf-8");
@@ -56,6 +57,10 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "Failed to load events" }));
     }
 
+    return;
+  }
+
+  if (handleVenueRoutes(req, res)) {
     return;
   }
 
