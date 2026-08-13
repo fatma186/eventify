@@ -19,4 +19,4 @@
  
 - [x] Create the `session-1` branch and make logical commits. 
 - [x] Run typecheck, lint, and curl tests.
-- [ ] Prepare the PR description, including AI assistance, verification, and one concrete AI mistake.
+- [x] Prepare the PR description, including AI assistance, verification, and one concrete AI mistake.
