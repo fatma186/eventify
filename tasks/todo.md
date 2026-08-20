@@ -15,7 +15,7 @@
 - [x] Create `src/validation.ts` with Zod schemas
 - [x] Add query schema for pagination (page, limit)
 - [x] Add query schema for filtering (venue, from, to)
-- [ ] Create `validateQuery` middleware
+- [x] Create `validateQuery` middleware
 - [x] Update GET /v1/events with pagination (page, limit params)
 - [x] Add response envelope: { data, page, limit, total }
 - [x] Add filtering by venue (exact match)
@@ -25,10 +25,10 @@
 ## Consistency Pass
 
 - [x] Add error middleware (handle all HttpError throws)
-- [ ] Validate all POST/PUT bodies with Zod + validate middleware
-- [ ] Validate all GET queries with validateQuery middleware
-- [ ] Review all status codes: 201 create, 200 update, 404 not found, 409 conflict, 400 bad request
-- [ ] Remove any hardcoded res.status(500) outside error middleware
+- [x] Validate all POST/PUT bodies with Zod + validate middleware
+- [x] Validate all GET queries with validateQuery middleware
+- [x] Review all status codes: 201 create, 200 update, 404 not found, 409 conflict, 400 bad request
+- [x] Remove any hardcoded res.status(500) outside error middleware
 - [x] Test all endpoints with curl
 
 ## Verification and PR
