@@ -3,6 +3,7 @@ import { z } from "zod";
 // Booking POST body
 export const createBookingSchema = z.strictObject({
   eventId: z.string().min(1, "eventId is required"),
+  userId: z.string().uuid("userId must be a valid UUID"),
 });
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;

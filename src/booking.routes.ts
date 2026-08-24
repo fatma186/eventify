@@ -1,5 +1,4 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import type { Event } from "./domain.ts";
 import { HttpError } from "./http-error.ts";
 import {
   createBooking,
@@ -9,14 +8,12 @@ import {
 import { createBookingSchema } from "./validation.ts";
 import { validate } from "./middleware.ts";
 
-// Hard-coded current user (Session 4'te auth gelecek)
-const CURRENT_USER_ID = "user-1";
 
-export function handleBookingRoutes(
+
+export async function handleBookingRoutes(
   req: IncomingMessage,
   res: ServerResponse,
-  events: Map<string, Event>,
-): boolean {
+): Promise<boolean> {
   if (!req.url?.startsWith("/v1/bookings")) {
     return false;
   }
@@ -24,57 +21,166 @@ export function handleBookingRoutes(
   // POST /v1/bookings - create
   if (req.method === "POST" && req.url === "/v1/bookings") {
     let body = "";
+
     req.on("data", (chunk) => {
       body += chunk.toString();
     });
-    req.on("end", () => {
+
+    req.on("end", async () => {
       try {
         const data = JSON.parse(body);
 
-        // Validate with Zod
         const validated = validate(data, createBookingSchema);
 
-        const booking = createBooking(
-          CURRENT_USER_ID,
-          validated.eventId,
-          events,
-        );
-        res.writeHead(201, { "Content-Type": "application/json" });
+        const booking = await createBooking(
+  validated.userId,
+  validated.eventId,
+);
+
+        res.writeHead(201, {
+          "Content-Type": "application/json",
+        });
+
         res.end(JSON.stringify(booking));
       } catch (error) {
         if (error instanceof SyntaxError) {
-          throw new HttpError(400, "Invalid request body");
+          res.writeHead(400, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              error: "Invalid request body",
+            }),
+          );
+
+          return;
         }
 
-        throw error;
+        if (error instanceof HttpError) {
+          res.writeHead(error.statusCode, {
+            "Content-Type": "application/json",
+          });
+
+          res.end(
+            JSON.stringify({
+              error: error.message,
+            }),
+          );
+
+          return;
+        }
+
+        console.error("Create booking error:", error);
+
+        res.writeHead(500, {
+          "Content-Type": "application/json",
+        });
+
+        res.end(
+          JSON.stringify({
+            error: "Internal server error",
+          }),
+        );
       }
     });
+
     return true;
   }
 
   // GET /v1/bookings/:id
-  if (req.method === "GET" && req.url?.match(/^\/v1\/bookings\/[^/]+$/)) {
-    const id = req.url.split("/")[3]!;
-    const booking = getBookingById(id);
+  if (
+    req.method === "GET" &&
+    req.url?.match(/^\/v1\/bookings\/[^/]+$/)
+  ) {
+    const id = req.url.split("/")[3];
 
-    if (!booking) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Booking not found" }));
+    if (!id) {
+      res.writeHead(400, {
+        "Content-Type": "application/json",
+      });
+
+      res.end(
+        JSON.stringify({
+          error: "Booking id is required",
+        }),
+      );
+
       return true;
     }
 
-    res.writeHead(200, { "Content-Type": "application/json" });
+    const booking = await getBookingById(id);
+
+    if (!booking) {
+      res.writeHead(404, {
+        "Content-Type": "application/json",
+      });
+
+      res.end(
+        JSON.stringify({
+          error: "Booking not found",
+        }),
+      );
+
+      return true;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+    });
+
     res.end(JSON.stringify(booking));
+
     return true;
   }
 
   // DELETE /v1/bookings/:id - cancel
-  if (req.method === "DELETE" && req.url?.match(/^\/v1\/bookings\/[^/]+$/)) {
-    const id = req.url.split("/")[3]!;
-    const booking = cancelBooking(id);
+  if (
+    req.method === "DELETE" &&
+    req.url?.match(/^\/v1\/bookings\/[^/]+$/)
+  ) {
+    const id = req.url.split("/")[3];
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(booking));
+    if (!id) {
+      res.writeHead(400, {
+        "Content-Type": "application/json",
+      });
+
+      res.end(
+        JSON.stringify({
+          error: "Booking id is required",
+        }),
+      );
+
+      return true;
+    }
+
+    try {
+      const booking = await cancelBooking(id);
+
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+      });
+
+      res.end(JSON.stringify(booking));
+    } catch (error) {
+      if (error instanceof HttpError) {
+        res.writeHead(error.statusCode, {
+          "Content-Type": "application/json",
+        });
+
+        res.end(
+          JSON.stringify({
+            error: error.message,
+          }),
+        );
+
+        return true;
+      }
+
+      throw error;
+    }
+
     return true;
   }
 

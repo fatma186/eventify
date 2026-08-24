@@ -1,26 +1,13 @@
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
-import type { Event } from "./domain.ts";
 import { handleVenueRoutes } from "./venue.routes.ts";
 import { handleBookingRoutes } from "./booking.routes.ts";
 import { eventsQuerySchema } from "./validation.ts";
 import { validateQuery } from "./middleware.ts";
 import { handleError } from "./error.middleware.ts";
-
-async function loadEvents(): Promise<Event[]> {
-  const file = await readFile("./data/events.json", "utf-8");
-  return JSON.parse(file) as Event[];
-}
-
-const eventsStore = new Map<string, Event>();
-
-async function initializeEventsStore() {
-  const events = await loadEvents();
-
-  for (const event of events) {
-    eventsStore.set(event.id, event);
-  }
-}
+import {
+  getEventById,
+  listEvents,
+} from "./infra/event.repository.ts";
 
 const server = createServer(async (req, res) => {
   try {
@@ -37,50 +24,59 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // GET /events
     if (req.method === "GET" && req.url === "/events") {
-      try {
-        const events = await loadEvents();
+      const result = await listEvents();
 
-        res.writeHead(200, {
-          "Content-Type": "application/json",
-        });
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+      });
 
-        res.end(JSON.stringify(events));
-      } catch (error) {
-  throw error;
-}
+      res.end(JSON.stringify(result.data));
+
       return;
     }
 
+    // GET /events/:id
     if (req.method === "GET" && req.url?.startsWith("/events/")) {
-      try {
-        const events = await loadEvents();
-        const id = req.url.split("/")[2];
+      const id = req.url.split("/")[2];
 
-        const event = events.find((event) => event.id === id);
-
-        if (!event) {
-          res.writeHead(404, {
-            "Content-Type": "application/json",
-          });
-
-          res.end(
-            JSON.stringify({
-              error: "Event not found",
-            }),
-          );
-
-          return;
-        }
-
-        res.writeHead(200, {
+      if (!id) {
+        res.writeHead(400, {
           "Content-Type": "application/json",
         });
 
-        res.end(JSON.stringify(event));
-      } catch (error) {
-  throw error;
-}
+        res.end(
+          JSON.stringify({
+            error: "Event id is required",
+          }),
+        );
+
+        return;
+      }
+
+      const event = await getEventById(id);
+
+      if (!event) {
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+        });
+
+        res.end(
+          JSON.stringify({
+            error: "Event not found",
+          }),
+        );
+
+        return;
+      }
+
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+      });
+
+      res.end(JSON.stringify(event));
+
       return;
     }
 
@@ -93,59 +89,22 @@ const server = createServer(async (req, res) => {
           eventsQuerySchema,
         );
 
-        const allEvents = Array.from(eventsStore.values());
-
-        // Filter by venue
-        let filtered = allEvents;
-
-        if (query.venue) {
-          filtered = filtered.filter(
-            (event) => event.venue === query.venue,
-          );
-        }
-
-        // Filter by date range
-        if (query.from || query.to) {
-          filtered = filtered.filter((event) => {
-            const eventDate = new Date(event.startsAt);
-
-            if (query.from && eventDate < query.from) {
-              return false;
-            }
-
-            if (query.to && eventDate > query.to) {
-              return false;
-            }
-
-            return true;
-          });
-        }
-
-        const total = filtered.length;
-
-        // Pagination
-        const start = (query.page - 1) * query.limit;
-
-        const data = filtered.slice(
-          start,
-          start + query.limit,
-        );
+        const result = await listEvents({
+          page: query.page,
+          limit: query.limit,
+          venue: query.venue,
+          from: query.from,
+          to: query.to,
+        });
 
         res.writeHead(200, {
           "Content-Type": "application/json",
         });
 
-        res.end(
-          JSON.stringify({
-            data,
-            page: query.page,
-            limit: query.limit,
-            total,
-          }),
-        );
+        res.end(JSON.stringify(result));
       } catch (error) {
-  handleError(res, error);
-}
+        handleError(res, error);
+      }
 
       return;
     }
@@ -154,7 +113,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    if (handleBookingRoutes(req, res, eventsStore)) {
+    if (await handleBookingRoutes(req, res)) {
       return;
     }
 
@@ -176,5 +135,3 @@ const server = createServer(async (req, res) => {
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
-
-initializeEventsStore();

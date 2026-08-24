@@ -1,0 +1,27 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "eventId": "01a03523-f9c8-77ea-b1c9-92d81de0cdbf",
+  "capacity": 5,
+  "users": [
+    { "userId": "01a03523-f91d-711f-b0ac-cad51d11f503", "token": "" },
+    { "userId": "01a03523-f927-775e-a6cd-882b2f4506ff", "token": "" },
+    { "userId": "01a03523-f92f-7639-aace-540cb8e688bd", "token": "" },
+    { "userId": "01a03523-f938-75fa-9b6f-6c7e94758491", "token": "" },
+    { "userId": "01a03523-f942-76d0-a47c-d11d4bd62fcd", "token": "" },
+    { "userId": "01a03523-f94c-733a-aebd-2b9581ef668c", "token": "" },
+    { "userId": "01a03523-f954-7094-966a-19a1be500246", "token": "" },
+    { "userId": "01a03523-f95d-74fa-bb11-25a4b9f7cf7d", "token": "" },
+    { "userId": "01a03523-f966-70e5-a0c3-e823caa3c35f", "token": "" },
+    { "userId": "01a03523-f96f-774d-b013-b838460ff508", "token": "" },
+    { "userId": "01a03523-f978-744b-91aa-506cab546550", "token": "" },
+    { "userId": "01a03523-f982-7748-a2b7-911321ecf873", "token": "" },
+    { "userId": "01a03523-f98c-75f8-867f-1145be7ee342", "token": "" },
+    { "userId": "01a03523-f993-766c-b679-32be77717468", "token": "" },
+    { "userId": "01a03523-f99b-765d-af24-c1b678522e04", "token": "" },
+    { "userId": "01a03523-f9a2-712c-82cc-81c652930675", "token": "" },
+    { "userId": "01a03523-f9a8-74ab-b461-6aa2b688190a", "token": "" },
+    { "userId": "01a03523-f9ae-7303-abb4-8d6efd32e91c", "token": "" },
+    { "userId": "01a03523-f9b4-70d9-a495-43c154566e47", "token": "" },
+    { "userId": "01a03523-f9ba-756c-ad6c-a7722c7c087c", "token": "" }
+  ]
+}
