@@ -1,0 +1,69 @@
+// Eventify — Prisma 7 schema
+// Domain model from Session 1: User, Event, Booking.
+// Prisma 7 uses the `prisma-client` generator (not `prisma-client-js`)
+// with an explicit `output` inside the source tree.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ATTENDEE
+  ORGANIZER
+  ADMIN
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
+}
+
+model User {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  email     String   @unique
+  name      String
+  role      Role
+  createdAt DateTime @default(now())
+
+  events   Event[]   @relation("EventOrganizer")
+  bookings Booking[]
+}
+
+model Event {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  title       String
+  description String
+  venue       String? // nullable — matches Session 1 domain
+  startsAt    DateTime
+  capacity    Int
+  priceCents  Int
+  organizerId String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  organizer User     @relation("EventOrganizer", fields: [organizerId], references: [id])
+  bookings  Booking[]
+
+  @@index([organizerId])
+  @@index([startsAt])
+}
+
+model Booking {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  userId    String        @db.Uuid
+  eventId   String        @db.Uuid
+  status    BookingStatus @default(CONFIRMED)
+  createdAt DateTime      @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+  @@index([userId])
+}
